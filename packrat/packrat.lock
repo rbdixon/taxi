@@ -1,6 +1,6 @@
 PackratFormat: 1.4
 PackratVersion: 0.4.2.8
-RVersion: 3.1.2
+RVersion: 3.2.0
 Repos: CRAN=http://cran.rstudio.com/
 
 Package: BH
@@ -36,8 +36,8 @@ Requires: bitops
 
 Package: Rcpp
 Source: CRAN
-Version: 0.11.4
-Hash: 1f684f6afd28079e4e609b49f353e49f
+Version: 0.11.6
+Hash: 004f4ffa4d0f4a3d177f2090799225e8
 
 Package: assertthat
 Source: CRAN
@@ -67,7 +67,7 @@ Hash: 89dc4c8734dad5322bb3c5c2af09056f
 Package: dplyr
 Source: CRAN
 Version: 0.4.1
-Hash: 4ce03ad26fb9592dda1274f72c5d3257
+Hash: 1e7dd5625a5807d8590f540380c721de
 Requires: BH, DBI, R6, Rcpp, assertthat, lazyeval, magrittr
 
 Package: ggplot2
@@ -126,7 +126,7 @@ GithubSha1: 63129218d44819cb05799a0366ce87e9b623a335
 Package: plyr
 Source: CRAN
 Version: 1.8.2
-Hash: a6d0a2d9382a6a6eef05f5271df94c5f
+Hash: 70681a5a00608b6137b753e1b5994e4a
 Requires: Rcpp
 
 Package: proto
@@ -137,7 +137,7 @@ Hash: 668a9e87cedbdc5f56c396edf1bd2648
 Package: reshape2
 Source: CRAN
 Version: 1.4.1
-Hash: c401ef665db07687e1e54fbc60c683bb
+Hash: e207efbaabcdff1aa2bc697369b62b0c
 Requires: Rcpp, plyr, stringr
 
 Package: scales
