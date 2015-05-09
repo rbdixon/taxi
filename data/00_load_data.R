@@ -1,7 +1,5 @@
-TEST_RAW = read.csv("kaggledata/test.csv", stringsAsFactors=FALSE) %>% 
-  tbl_df
-cache("TEST_RAW")
+# Import data first using: psql taxi -f kaggledata/import.sql
+pg = src_postgres(dbname="taxi", host="127.0.0.1")
 
-TRAIN_RAW = read.csv("kaggledata/train.csv", stringsAsFactors=FALSE) %>% 
-  tbl_df
-cache("TRAIN_RAW")
+TEST_RAW = tbl(pg, "test_raw")
+TRAIN_RAW = tbl(pg, "train_raw")
