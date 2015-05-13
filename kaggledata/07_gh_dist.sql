@@ -1,0 +1,16 @@
+-- Prep a table with gh-to-gh distances
+--DROP TABLE IF EXISTS ghdist;
+
+--CREATE TABLE ghdist AS
+--  WITH dgh AS (
+  --    SELECT DISTINCT 
+  --      gh, 
+  --      level
+  --    FROM test
+  --  )
+--  SELECT
+--    a.gh AS gh1,
+--    b.gh AS gh2
+--  FROM dgh AS a 
+--  CROSS JOIN dgh AS b WHERE a.level=b.level
+--;
