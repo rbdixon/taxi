@@ -43,4 +43,5 @@ JOIN ghinfo AS first_ghinfo ON first.origin_gh=first_ghinfo.gh
 JOIN ghinfo AS last_ghinfo ON last.dest_gh=last_ghinfo.gh
 ;
 
-SELECT * FROM trip_details LIMIT 10;
+CREATE INDEX trip_details_trip_id_lev ON trip_details ( "TRIP_ID", level );
+CREATE INDEX trip_details_origin_gh_lev ON trip_details ( origin_gh, level );

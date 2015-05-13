@@ -1,2 +1,2 @@
 TRAJ = tbl(pg, "traj")
-TRAJ_MAX = tbl(pg, "traj_max")
+TRIP_DETAILS = tbl(pg, "trip_details")
