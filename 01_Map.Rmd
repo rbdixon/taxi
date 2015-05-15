@@ -1,0 +1,183 @@
+---
+title: "Map Analysis"
+author: "Brad Dixon <rbdixon@gmail.com>"
+date: "May 12, 2015"
+output:
+  html_document:
+    keep_md: yes
+---
+
+```{r init, include=FALSE}
+library(ProjectTemplate)
+load.project()
+library(knitr)
+library(leaflet)
+opts_chunk$set(warning=FALSE, fig.width=10, fig.height=10)
+```
+
+# Porto, Portugal
+
+```{r porto}
+map=leaflet() %>% 
+  addTiles(options = tileOptions(opacity=0.4)) %>% 
+  setView(-8.621953, 41.162142, 12)
+map
+```
+
+# Trip Variables
+
+```{r trip_scatterplots}
+FULL_TRIP_DETAILS = TRIP_DETAILS %>% 
+  # filter(level==9) %>% 
+  left_join(GHINFO, by=c(origin_gh="gh")) %>% 
+  rename(level=level.x, origin_centroid=centroid, origin_lat=lat, origin_lon=lon, origin_geo=geo, origin_geojson=geojson) %>% 
+  select(-level.y, -gh) %>% 
+  left_join(GHINFO, by=c(dest_gh="gh")) %>% 
+  select(-level.y, -gh) %>% 
+  rename(level=level.x, dest_centroid=centroid, dest_lat=lat, dest_lon=lon, dest_geo=geo, dest_geojson=geojson) %>% 
+  compute
+
+FULL_TRIP_DETAILS %>% 
+  filter(level==9) %>% 
+  select(az, dist, recs, origin_lat, origin_lon, dest_lat, dest_lon) %>% 
+  collect %>% 
+  ggpairs()
+```
+
+# Lat/Lon Scatterplot
+
+```{r trip_map}
+ORIGIN=FULL_TRIP_DETAILS %>%
+  filter(level==9) %>% 
+  group_by(origin_gh) %>% 
+  summarize(
+    n = n(),
+    lat=mean(origin_lat),
+    lon=mean(origin_lon),
+    dist = mean(dist)
+  ) %>% 
+  collect
+
+DESTINATION=FULL_TRIP_DETAILS %>%
+  filter(level==9) %>% 
+  group_by(dest_gh) %>% 
+  summarize(
+    n = n(),
+    lat=mean(dest_lat),
+    lon=mean(dest_lon),
+    dist = mean(dist)
+  ) %>% 
+  collect
+
+map %>% 
+  addCircles(ORIGIN$lon, ORIGIN$lat, color="green") %>% 
+  addCircles(DESTINATION$lon, DESTINATION$lat, color="blue")
+```
+
+# Origin / Destination Pairs
+
+```{r od_curve}
+ODPAIRS = FULL_TRIP_DETAILS %>% 
+  filter(level %in% 4:9) %>% 
+  group_by(level, origin_gh, dest_gh) %>% 
+  summarize(n=n()) %>% 
+  group_by(level) %>% 
+  arrange(desc(n)) %>% 
+  mutate(
+    pct = n/sum(n),
+    cumpct = cumsum(n)/sum(n)
+  ) %>% 
+  mutate(
+    num = row_number()
+  ) %>% 
+  collect
+
+ODPAIRS %>% 
+  ggplot(aes(num, cumpct)) +
+    geom_line() +
+    facet_wrap(~ level) +
+    theme_bw()
+```
+
+Above is CDF of trips by geohash. Not much of a hook past level 7.
+
+```{r od_heatmap}
+ODPAIRS %>% 
+  filter(level==4) %>% 
+  arrange(desc(pct)) %>% 
+  ggplot(aes(origin_gh, dest_gh, fill=pct)) +
+    geom_raster() +
+    theme_bw()
+```
+
+Above shows heatmap of level 4 origin/destination pairs.
+
+```{r od_heatmap_ez3f}
+ODPAIRS %>% 
+  filter( 
+    substring(origin_gh, 1, 4) == "ez3f",
+    level==5
+  ) %>% 
+  arrange(desc(pct)) %>% 
+  ggplot(aes(origin_gh, dest_gh, fill=pct)) +
+    geom_raster() +
+    theme_bw()
+```
+
+Zoom in on ez3f.
+
+```{r od_heatmap_ez3f_f5_fh}
+ODPAIRS %>% 
+  filter( 
+    substring(origin_gh, 1, 5) %in% c("ez3f5", "ez3fh"),
+    level==6
+  ) %>% 
+  arrange(desc(pct)) %>% 
+  ggplot(aes(origin_gh, dest_gh, fill=pct)) +
+    geom_raster() +
+    theme_bw()
+```
+
+Zoom in on e3f5 and e3fh.
+
+# Self-routing
+
+Origin and Destination geohashes are the same.
+
+```{r od_by_level_selfroute_cumpct}
+SELFROUTE = ODPAIRS %>% 
+  group_by(level) %>% 
+  mutate(
+    total_n = sum(n)
+  ) %>% 
+  filter(origin_gh==dest_gh) %>% 
+  arrange(desc(n)) %>% 
+  mutate(
+    cumpct = cumsum(n)/total_n,
+    num = row_number()
+  )
+
+SELFROUTE %>% 
+  group_by(level) %>% 
+  summarise_each(funs(min, mean, max), pct)
+
+ggplot(SELFROUTE, aes(num, cumpct)) +
+  geom_line() +
+  facet_wrap(~ level) +
+  theme_bw()
+```
+
+~25% of trips self-route on level 5. Past that there isn't much self-routing.
+
+```{r which_selfroute_level4}
+SRL5 = SELFROUTE %>% 
+  filter(level==5, pct>.1) %>% 
+  left_join(GHINFO, by=c(origin_gh="gh", level="level"), copy=TRUE) %>% 
+  collect %>% 
+  print()
+
+map %>% 
+  addGeoJSON(geojsoncol_to_fc(SRL5$geojson))
+```
+
+The above two level 5 gehashes account for ~26% of trips.

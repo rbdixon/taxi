@@ -1,0 +1,339 @@
+---
+title: "Taxi Project Descriptive Analysis"
+author: "Brad Dixon <rbdixon@gmail.com>"
+date: "May 7, 2015"
+output: html_document
+---
+
+```{r init, include=FALSE}
+library(ProjectTemplate)
+load.project()
+library(knitr)
+opts_chunk$set(warning=FALSE, fig.width=10, fig.height=10)
+```
+
+# Data Sets
+
+## Train
+
+```{r train}
+print(glimpse(TRAIN_RAW))
+```
+
+## Test
+
+```{r test}
+print(glimpse(TEST_RAW))
+```
+
+# Variables
+
+## TRIP_ID
+
+> TRIP_ID: (String) It contains an unique identifier for each trip;
+
+Assumptions:
+
+* Trip IDs are assigned to each row in train and test data sets.
+* Trip IDs are unique across train and test data sets.
+
+```{r TRIP_ID}
+DATA %>% 
+  group_by(dataset) %>% 
+  filter(is.na(TRIP_ID)) %>% 
+  summarize(n = n()) %>% 
+  filter(n > 1) %>% 
+  group_by(dataset) %>% 
+  summarize(num_trip_id_NA = n()) %>% 
+  collect
+
+DATA %>%
+  group_by(dataset, TRIP_ID) %>% 
+  summarize(n = n()) %>% 
+  filter(n > 1) %>% 
+  group_by(dataset) %>% 
+  summarize(num_trip_id_duplicated = n()) %>% 
+  collect
+```
+
+Finding:
+
+* TEST, TRAIN: No NA TRIP_ID's.
+* TRAIN: Trip IDs are duplicated.
+
+## CALL_TYPE
+
+> CALL_TYPE: (char) It identifies the way used to demand this service. It may contain one of three possible values:
+> ‘A’ if this trip was dispatched from the central;
+> ‘B’ if this trip was demanded directly to a taxi driver on a specific stand;
+> ‘C’ otherwise (i.e. a trip demanded on a random street).
+
+Assumptions:
+
+* No missing values
+* A, B, and C levels are found in both train and test
+* No unexpected values
+
+```{r CALL_TYPE}
+DATA %>% 
+  group_by(dataset, CALL_TYPE) %>% 
+  summarize(n = n()) %>% 
+  arrange(dataset, CALL_TYPE) %>% 
+  collect %>% 
+  spread(CALL_TYPE, n)
+```
+
+Finding:
+
+* All assumptions confirmed.
+
+## ORIGIN_CALL
+
+> ORIGIN_CALL: (integer) It contains an unique identifier for each phone number which was used to demand, at least, one service. It identifies the trip’s customer if CALL_TYPE=’A’. Otherwise, it assumes a NULL value;
+
+Assumptions:
+
+* Most "A" type taxi calls have a ORIGIN_CALL identifier assigned.
+* ORIGIN_CALL identifiers are persistent to the phone as indicated by some identifiers taking repeated cab rides.
+* Some ORIGIN_CALL identifiers will be found in training and test sets.
+
+```{r ORIGIN_CALL}
+# How many records have ORIGIN_CALL assigned by CALL_TYPE?
+DATA %>% 
+  mutate(
+    origin_call_assigned = ORIGIN_CALL!="" & !is.na(ORIGIN_CALL)
+  ) %>% 
+  group_by(dataset, CALL_TYPE, origin_call_assigned) %>% 
+  summarize(n = n()) %>% 
+  collect %>% 
+  spread(origin_call_assigned, n)
+
+# How many distinct ORIGIN_CALL ID's have taken multiple trips?
+DATA %>% 
+  group_by(dataset, ORIGIN_CALL) %>% 
+  summarize(multiple_trips = n()>1) %>% 
+  group_by(dataset, multiple_trips) %>% 
+  summarize(n = n()) %>% 
+  arrange(dataset, multiple_trips) %>% 
+  collect %>% 
+  spread(multiple_trips, n)
+
+# How many ORIGIN_CALL ID's are found in both data sets?
+DATA %>%
+  filter(!is.na(ORIGIN_CALL), ORIGIN_CALL!="") %>% 
+  select(dataset, ORIGIN_CALL) %>% 
+  distinct %>% 
+  group_by(ORIGIN_CALL) %>% 
+  summarize(
+    in_train_and_test = any(dataset=="TRAIN") & any(dataset=="TEST")
+  ) %>% 
+  group_by(in_train_and_test) %>% 
+  summarize(n=n()) %>% 
+  collect
+
+# Top ORIGIN_CALL ID's
+DATA %>% 
+  filter(!is.na(ORIGIN_CALL), ORIGIN_CALL!="") %>% 
+  group_by(dataset, ORIGIN_CALL) %>% 
+  summarize(n=n()) %>% 
+  filter(n>1) %>% 
+  group_by(dataset) %>% 
+  top_n(10, n) %>% 
+  collect
+```
+
+Findings:
+
+* TEST, TRAIN: Empty string or NA indicates missing ORIGIN_CALL assignment.
+* TEST, TRAIN: Only CALL_TYPE=="A" have ORIGIN_CALL assigned.
+* The train data set has many repeat trips by identified phone numbers (ORIGIN_CALL).
+* The test data set is mostly one-trip per phone number. This makes sense since test is multiple snapshots in time.
+* Very few ORIGIN_CALL ID's are found in both train and test.
+* Some ORIGIN_CALL ID's are very frequent callers?
+* ORIGIN_CALL identifier 2002 is a very frequent taxi requester. Possibly a hotel or a veiled NA?
+
+## ORIGIN_STAND
+
+> ORIGIN_STAND: (integer): It contains an unique identifier for the taxi stand. It identifies the starting point of the trip if CALL_TYPE=’B’. Otherwise, it assumes a NULL value
+
+Assumptions:
+
+* Most ORIGIN_STAND == "B" calls will have a taxi stand identifier but not all will.
+* Stands are frequent repeat callers of taxis.
+
+```{r ORIGIN_STAND}
+# How frequently is ORIGIN_STAND assigned by CALL_TYPE?
+DATA %>% 
+  group_by(dataset, CALL_TYPE) %>% 
+  mutate(
+    origin_stand_assigned = ORIGIN_STAND!="" & !is.na(ORIGIN_STAND)
+  ) %>% 
+  group_by(dataset, CALL_TYPE, origin_stand_assigned) %>% 
+  summarize(n=n()) %>% 
+  collect %>% 
+  arrange(dataset, CALL_TYPE) %>% 
+  spread(origin_stand_assigned, n)
+
+# Top ORIGIN_STANDs
+DATA %>% 
+  group_by(dataset, ORIGIN_STAND) %>% 
+  summarize(n=n()) %>% 
+  filter(n>1) %>% 
+  top_n(10, n) %>% 
+  collect %>% 
+  print.data.frame()
+```
+
+Findings:
+
+* TRAIN, TEST: ORIGIN_STAND can be either NA or "".
+* TEST: There are examples of CALL_TYPE=="B" and ORIGIN_STAND in train but none are found in TEST.
+
+## TAXI_ID
+
+> TAXI_ID: (integer): It contains an unique identifier for the taxi driver that performed each trip;
+
+Assumptions:
+
+* TAXI_ID will not be missing
+
+```{r TAXI_ID}
+# Are TAXI_ID's always assigned?
+DATA %>% 
+  group_by(dataset) %>% 
+  mutate(
+    taxi_id_assigned = !is.na(TAXI_ID)
+  ) %>% 
+  group_by(dataset, taxi_id_assigned) %>% 
+  summarize(n=n()) %>% 
+  collect %>% 
+  spread(taxi_id_assigned, n)
+
+# Top Taxi ID's
+DATA %>% 
+  group_by(dataset, TAXI_ID) %>% 
+  summarize(n=n()) %>% 
+  filter(n>1) %>% 
+  top_n(10, n) %>% 
+  collect %>% 
+  print.data.frame()
+```
+
+Findings:
+
+* Assumptions confirmed.
+* TEST: Most taxi drivers are observed once in the test data.
+
+## TIMESTAMP
+
+> TIMESTAMP: (integer) Julian Timestamp (in seconds). It identifies the trip’s start
+
+Assumptions:
+
+* Origin is 1970-01-01. This means it isn't really a Julian timestamp.
+* Timezone is UTC
+
+Testing data set date range:
+
+> Five test sets will be available to evaluate your predictive framework (in one single CSV file named "test.csv"). Each one of these datasets refer to trips that occurred between 01/07/2014 and 31/12/2014. Each one of these data sets will provide a snapshot of the current network status on a given timestamp. It will provide partial trajectories for each one of the on-going trips during that specific moment.
+> The five snapshots included on the test set refer to the following timestamps:
+> 
+> * 14/08/2014 18:00:00
+> * 30/09/2014 08:30:00
+> * 06/10/2014 17:45:00
+> * 01/11/2014 04:00:00
+> * 21/12/2014 14:30:00
+
+```{r TIMESTAMP_TT}
+DATA %>% 
+  group_by(dataset) %>% 
+  summarize(
+    mindt = to_timestamp(min(TIMESTAMP)),
+    maxdt = to_timestamp(max(TIMESTAMP))
+  ) %>% 
+  collect
+```
+
+```{r TIMESTAMP_TEST}
+TEST_RAW %>% 
+  mutate(
+    dt = to_timestamp(TIMESTAMP)
+  ) %>% 
+  collect %>% 
+  ggplot(aes(dt)) +
+    geom_histogram() +
+    xlab("Date") +
+    ylab("Count of Trip Records") +
+    ggtitle("TEST Dataset Trips by Day") +
+    theme_bw()
+
+TEST_RAW %>% 
+  mutate(
+    dt_day = date_trunc('day', to_timestamp(TIMESTAMP))
+  ) %>%
+  group_by(dt_day) %>% 
+  arrange(dt_day) %>% 
+  summarize(
+    mindt = to_timestamp(min(TIMESTAMP)),
+    maxdt = to_timestamp(max(TIMESTAMP)) 
+  ) %>% 
+  collect
+```
+
+Findings:
+
+* TEST: Time skewing? This does not appear to be UTC since the 6/10/2014 data, gathered at 17:45:00, has a maxdate timestamp of 13:44:33. Discussions in the forum indicate otherwise. Odd. The first 4 days are skewed by 4 hours and the last by 5 hours.
+
+## DAY_TYPE
+
+> DAYTYPE: (char) It identifies the daytype of the trip’s start. It assumes one of three possible values:
+>
+> * ‘B’ if this trip started on a holiday or any other special day (i.e. extending holidays, floating holidays, etc.);
+> * ‘C’ if the trip started on a day before a type-B day;
+> * ‘A’ otherwise (i.e. a normal day, workday or weekend).
+
+Assumptions:
+
+* All levels are represented in both data sets
+
+```{r DAY_TYPE}
+DATA %>% 
+  group_by(dataset, DAY_TYPE) %>% 
+  summarize(n=n()) %>% 
+  collect %>% 
+  spread(DAY_TYPE, n)
+```
+
+Findings:
+
+* Only "A" days (normal) days are represented.
+
+## MISSING_DATA
+
+> MISSING_DATA: (Boolean) It is FALSE when the GPS data stream is complete and TRUE whenever one (or more) locations are missing
+
+Assumption:
+
+* Some days are missing from both data sets
+
+```{r MISSING_DATA}
+DATA %>% 
+  group_by(dataset, MISSING_DATA) %>% 
+  summarize(n=n()) %>% 
+  collect %>% 
+  spread(MISSING_DATA, n)
+```
+
+Finding:
+
+* Only the training data has trips with missing data and only 10 trips are missing data all together.
+
+## POLYLINE
+
+> POLYLINE: (String): It contains a list of GPS coordinates (i.e. WGS84 format) mapped as a string. The beginning and the end of the string are identified with brackets (i.e. [ and ], respectively). Each pair of coordinates is also identified by the same brackets as [LONGITUDE, LATITUDE]. This list contains one pair of coordinates for each 15 seconds of trip. The last list item corresponds to the trip’s destination while the first one represents its start;
+
+POLYLINE is mapped into a trajectory table (`TRAJ`) by PostGIS SQL statements. The field `GH` is a 9 character geohash of each point in the trajectory.
+
+```{r polyline_gh4}
+TRAJ
+```
