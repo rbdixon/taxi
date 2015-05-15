@@ -5,9 +5,9 @@ CREATE TABLE traj AS
 -- Random sample of train JSON
 WITH train_extract_json AS (
   SELECT
-  'TRAIN'::VARCHAR AS dataset,
-  "TRIP_ID", 
-  json_array_elements("POLYLINE"::json) AS coord_json 
+    'TRAIN'::VARCHAR AS dataset,
+    "TRIP_ID", 
+    json_array_elements("POLYLINE"::json) AS coord_json 
   FROM train_raw
   -- SAMPLE
   WHERE id in (
@@ -16,6 +16,15 @@ WITH train_extract_json AS (
     GROUP BY id -- Discard duplicates
     LIMIT 1000
   )
+),
+
+-- All test
+test_extract_json AS (
+  SELECT
+    'TEST'::VARCHAR AS dataset,
+    "TRIP_ID", 
+    json_array_elements("POLYLINE"::json) AS coord_json 
+  FROM test_raw
 ),
 
 -- Extact coordinates
@@ -27,7 +36,11 @@ extract_lat_lon AS (
     (coord_json->>1)::real AS lat,
     --COUNT(*) OVER ( PARTITION BY "TRIP_ID" ROWS UNBOUNDED PRECEDING ) AS seq
     row_number() OVER ( PARTITION BY "TRIP_ID" ROWS UNBOUNDED PRECEDING ) AS seq
-  FROM train_extract_json
+  FROM (
+    SELECT * FROM train_extract_json
+    UNION ALL 
+    SELECT * FROM test_extract_json
+  ) tt
 ),
 
 -- Convert to GeoHash
