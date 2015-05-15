@@ -13,6 +13,12 @@ Source: CRAN
 Version: 0.3.1
 Hash: 3a9e85b26ec3ab570266bccb3f9de055
 
+Package: GGally
+Source: CRAN
+Version: 0.5.0
+Hash: 01f7702808b45581ba22f2c1d88e801e
+Requires: ggplot2, gtable, plyr, reshape, stringr
+
 Package: ProjectTemplate
 Source: CRAN
 Version: 0.6
@@ -39,10 +45,22 @@ Source: CRAN
 Version: 1.3-0
 Hash: 8b1341dfd547c90ed4b3365d5aa46a7b
 
+Package: RPostgreSQL
+Source: CRAN
+Version: 0.4
+Hash: 277c23e86f0a04278aed7de72677b3b9
+Requires: DBI
+
 Package: Rcpp
 Source: CRAN
 Version: 0.11.6
 Hash: 004f4ffa4d0f4a3d177f2090799225e8
+
+Package: RgoogleMaps
+Source: CRAN
+Version: 1.2.0.7
+Hash: 7b89070606956de87fd505efec283740
+Requires: RJSONIO, png
 
 Package: assertthat
 Source: CRAN
@@ -104,6 +122,19 @@ Source: CRAN
 Version: 1.2
 Hash: d518b2a342a62e0add8c07403859ff13
 
+Package: geosphere
+Source: CRAN
+Version: 1.3-13
+Hash: 36c69e6720445b3ab89693950b7b4c2d
+Requires: sp
+
+Package: ggmap
+Source: CRAN
+Version: 2.4
+Hash: 6e6d3591c5436f7eb68da14a1b6b868e
+Requires: RgoogleMaps, digest, geosphere, ggplot2, jpeg, mapproj, plyr,
+    png, proto, reshape2, rjson, scales
+
 Package: ggplot2
 Source: CRAN
 Version: 1.0.1
@@ -137,6 +168,11 @@ Source: CRAN
 Version: 0.6.1
 Hash: 3b082465d75a7a0c3d09ad06a0905aff
 Requires: R6, RCurl, digest, jsonlite, mime, stringr
+
+Package: jpeg
+Source: CRAN
+Version: 0.1-8
+Hash: 2a96df07e30724f8bb773e4f78c634c6
 
 Package: jsonlite
 Source: CRAN
@@ -181,6 +217,17 @@ Source: CRAN
 Version: 1.5
 Hash: 38d492cf072bc9f3c73bda2aee3d0e23
 
+Package: mapproj
+Source: CRAN
+Version: 1.2-2
+Hash: 26b74cac98f12af52703765791824ea2
+Requires: maps
+
+Package: maps
+Source: CRAN
+Version: 2.3-9
+Hash: 236a24fa187bb1f3a1694f2915597c5e
+
 Package: markdown
 Source: CRAN
 Version: 0.7.7
@@ -213,22 +260,48 @@ GithubUsername: rstudio
 GithubRef: master
 GithubSha1: 63129218d44819cb05799a0366ce87e9b623a335
 
+Package: plotmapbox
+Source: github
+Version: 1.0
+Hash: e6defe2563416a907123945e5a256b3e394e3f7a
+Requires: RgoogleMaps, ggmap, png
+GithubRepo: plotmapbox
+GithubUsername: rbdixon
+GithubRef: master
+GithubSha1: e6defe2563416a907123945e5a256b3e394e3f7a
+
 Package: plyr
 Source: CRAN
 Version: 1.8.2
 Hash: 70681a5a00608b6137b753e1b5994e4a
 Requires: Rcpp
 
+Package: png
+Source: CRAN
+Version: 0.1-7
+Hash: 7559dcd0a9f188351986d0494ec1516d
+
 Package: proto
 Source: CRAN
 Version: 0.3-10
 Hash: 668a9e87cedbdc5f56c396edf1bd2648
+
+Package: reshape
+Source: CRAN
+Version: 0.8.5
+Hash: 3a8bcdf002df52627d35dfab189711f4
+Requires: plyr
 
 Package: reshape2
 Source: CRAN
 Version: 1.4.1
 Hash: e207efbaabcdff1aa2bc697369b62b0c
 Requires: Rcpp, plyr, stringr
+
+Package: rjson
+Source: CRAN
+Version: 0.2.15
+Hash: f78059fac4af154bfe46bf547ae12be9
 
 Package: rmarkdown
 Source: github
@@ -256,6 +329,11 @@ Source: CRAN
 Version: 0.2.4
 Hash: b8b1af97bd07818605223060386b00dd
 Requires: RColorBrewer, dichromat, labeling, munsell, plyr
+
+Package: sp
+Source: CRAN
+Version: 1.1-0
+Hash: 53fa1a7a03c897eac993d0a2253c5b0d
 
 Package: stringi
 Source: CRAN
