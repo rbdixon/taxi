@@ -6,5 +6,7 @@ prep_data = function(D) {
     )
 }
 
-TEST = prep_data(TEST_RAW)
-TRAIN = prep_data(TRAIN_RAW)
+source("data/00_load_data.R")
+
+# TEST = prep_data(TEST_RAW)
+# TRAIN = prep_data(TRAIN_RAW)
